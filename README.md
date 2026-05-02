@@ -43,11 +43,15 @@ Sin embargo, en este vehículo **no se obtuvieron resultados satisfactorios**, p
 - Tkinter (opcional para interfaz gráfica)
 
 ---
-
 ## 📦 Instalación
 
-Clona el repositorio:
+### 🚀 Opción recomendada (sin Python)
 
-```bash id="a1b3cd"
-git clone https://github.com/tuusuario/obd2-getz-2008.git
-cd obd2-getz-2008
+Descarga la versión lista para usar desde la sección **Releases** del repositorio:
+
+👉 Ve a **Releases** y descarga el archivo `.exe`
+
+Luego solo ejecuta:
+
+```bash
+elm327.exe
