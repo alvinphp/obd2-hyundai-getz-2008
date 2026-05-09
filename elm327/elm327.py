@@ -1,72 +1,40 @@
 import tkinter as tk
-import obd
+from tkinter import messagebox, ttk
 import math
-from tkinter import messagebox
-from tkinter import ttk
-from obd_class import OBDApp
 
-# -------------------------------------------
-# ------------------VENTANA -----------------
-# -------------------------------------------
+from obd_controller import ControladorOBD
+
+
+# ------------------ VENTANA ------------------
 root = tk.Tk()
 root.title("OBD2 HYUNDAI GETZ 2008")
 root.geometry("1300x500")
 root.config(bg="#C0C0C0")
 
-# -------------------------------------------
-# ----------- ESTADO GLOBAL ------------------
-# -------------------------------------------
-conectado = False
-conexion = None
-current_data = {}
+
+# ------------------ CONTROLADOR ------------------
+controlador = ControladorOBD()
 puerto_var = tk.StringVar(value="COM5")
 
-lector_obd = OBDApp()
 
-# ---------------------------------------
-# ------------------SAFE-----------------
-# ---------------------------------------
-def safe(sensor):
-    try:
-        if sensor is None or sensor.is_null():
-            return 0
-        return sensor.value.magnitude
-    except:
-        return 0
+# ------------------ DATOS ------------------
+current_data = {}
 
-# ---------------------------------------
-# --------------- CONEXION --------------
-# ---------------------------------------
+
+# ------------------ CONEXION ------------------
 def conectar():
-    global conectado, conexion
-    try:
-        conexion = obd.OBD(puerto_var.get())
-
-        if conexion.is_connected():
-            conectado = True
-            messagebox.showinfo("OBD", "Conectado correctamente")
-        else:
-            conectado = False
-            messagebox.showwarning("OBD", "No se pudo conectar")
-
-    except Exception as e:
-        conectado = False
-        messagebox.showerror("Error", str(e))
+    if controlador.conectar(puerto_var.get()):
+        messagebox.showinfo("OBD", "Conectado correctamente")
+    else:
+        messagebox.showwarning("OBD", "No se pudo conectar")
 
 
 def desconectar():
-    global conectado, conexion
-
-    if conexion:
-        conexion.close()
-
-    conectado = False
-    conexion = None
+    controlador.desconectar()
     messagebox.showinfo("OBD", "Desconectado")
 
-# ---------------------------------------
-# ----------- CONFIGURACION --------------
-# ---------------------------------------
+
+# ------------------ CONFIGURACION ------------------
 def configuracion():
     win = tk.Toplevel(root)
     win.title("Configuración OBD")
@@ -76,20 +44,8 @@ def configuracion():
     tk.Entry(win, textvariable=puerto_var).pack()
     tk.Button(win, text="Guardar", command=win.destroy).pack(pady=10)
 
-# ---------------------------------------
-# ----------- BUSCAR PUERTOS -------------
-# ---------------------------------------
-def buscar():
-    puertos = obd.scan_serial()
 
-    if puertos:
-        messagebox.showinfo("Puertos", "\n".join(puertos))
-    else:
-        messagebox.showwarning("Puertos", "No encontrados")
-
-# ---------------------------------------
-# --------------- MENU ------------------
-# ---------------------------------------
+# ------------------ MENU ------------------
 menu = tk.Menu(root)
 root.config(menu=menu)
 
@@ -99,13 +55,10 @@ menu.add_cascade(label="Archivo", menu=file_menu)
 file_menu.add_command(label="Conectar", command=conectar)
 file_menu.add_command(label="Desconectar", command=desconectar)
 file_menu.add_command(label="Configuración", command=configuracion)
-file_menu.add_command(label="Buscar puertos", command=buscar)
-file_menu.add_separator()
 file_menu.add_command(label="Salir", command=root.destroy)
 
-# ---------------------------------------
-# ------ BARRA SUPERIOR (ESTADO) --------
-# ---------------------------------------
+
+# ------------------ UI SUPERIOR ------------------
 top_frame = tk.Frame(root, bg="#C0C0C0")
 top_frame.pack(side="top", fill="x")
 
@@ -117,9 +70,8 @@ estado_combustible_label = tk.Label(
 )
 estado_combustible_label.pack(pady=5)
 
-# ---------------------------------------
-# ---------------- UI -------------------
-# ---------------------------------------
+
+# ------------------ UI PRINCIPAL ------------------
 main = tk.Frame(root, bg="#C0C0C0")
 main.pack(fill="both", expand=True)
 
@@ -135,10 +87,10 @@ table.heading("valor", text="Valor")
 table.heading("estado", text="Estado")
 table.pack(fill="both", expand=True)
 
-# ---------------------------------------
-# --------------- GAUGE -----------------
-# ---------------------------------------
+
+# ------------------ GAUGE ------------------
 def draw_gauge(x, y, value, max_value, label):
+
     try:
         value = float(value)
     except:
@@ -159,75 +111,59 @@ def draw_gauge(x, y, value, max_value, label):
     canvas.create_text(x, y+55, text=f"{value:.2f}", font=("Arial", 10, "bold"))
     canvas.create_text(x, y+75, text=label, font=("Arial", 9))
 
-# ---------------------------------------
-# --------------- TABLA -----------------
-# ---------------------------------------
+
+# ------------------ TABLA ------------------
 def update_table(data):
+
     table.delete(*table.get_children())
 
     for k, (v, m) in data.items():
-        if isinstance(v, (int, float)):
-            valor = f"{v:.2f}"
-        else:
-            valor = str(v)
-
+        valor = f"{v:.2f}" if isinstance(v, (int, float)) else str(v)
         table.insert("", "end", values=(k, valor, ""))
 
-# ---------------------------------------
-# --------------- UPDATE ----------------
-# ---------------------------------------
+
+# ------------------ UPDATE ------------------
 def update():
+
     global current_data
 
     canvas.delete("all")
 
-    volt_val = 0
-    level_val = 0
-    status_fuel = "N/A"
+    data = controlador.comandos_obd()
 
-    if conectado and conexion:
-        try:
-            rpm = safe(conexion.query(obd.commands.RPM))
-            speed = safe(conexion.query(obd.commands.SPEED))
-            temp = safe(conexion.query(obd.commands.COOLANT_TEMP))
-            load = safe(conexion.query(obd.commands.ENGINE_LOAD))
-            throttle = safe(conexion.query(obd.commands.THROTTLE_POS))
-            pressure = safe(conexion.query(obd.commands.INTAKE_PRESSURE))
+    rpm = data.get("RPM", 0)
+    speed = data.get("SPEED", 0)
+    temp = data.get("TEMP", 0)
+    load = data.get("LOAD", 0)
+    throttle = data.get("THROTTLE", 0)
+    pressure = data.get("PRESSURE", 0)
+    stft = data.get("STFT", 0)
+    ltft = data.get("LTFT", 0)
+    voltage = data.get("VOLTAGE", 0)
+    fuel_level = data.get("FUEL_LEVEL", 0)
+    fuel_status = data.get("FUEL_STATUS", "N/A")
 
-            stft = safe(conexion.query(obd.commands.SHORT_FUEL_TRIM_1))
-            ltft = safe(conexion.query(obd.commands.LONG_FUEL_TRIM_1))
 
-            volt_val = lector_obd.voltaje_bateria(conexion) or 0
-            level_val = lector_obd.level_fuel(conexion) or 0
-            status_fuel = lector_obd.fuel_status(conexion) or "N/A"
-
-        except Exception as e:
-            print("Error:", e)
-
-    # 🔥 SIEMPRE ACTUALIZA EL LABEL ARRIBA
-    if "Closed loop" in str(status_fuel):
-        estado_combustible_label.config(
-            text=f"ESTADO DE COMBUSTIBLE: {status_fuel}",
-            fg="green"
-        )
+    # LABEL COMBUSTIBLE
+    if "Closed loop" in str(fuel_status):
+        estado_combustible_label.config(text=f"ESTADO DE COMBUSTIBLE: {fuel_status}", fg="green")
     else:
-        estado_combustible_label.config(
-            text=f"ESTADO DE COMBUSTIBLE: {status_fuel}",
-            fg="red"
-        )
+        estado_combustible_label.config(text=f"ESTADO DE COMBUSTIBLE: {fuel_status}", fg="red")
+
 
     current_data = {
-        "RPM": (rpm if 'rpm' in locals() else 0, 8000),
-        "SPEED": (speed if 'speed' in locals() else 0, 180),
-        "TEMP": (temp if 'temp' in locals() else 0, 120),
-        "LOAD %": (load if 'load' in locals() else 0, 100),
-        "THROTTLE %": (throttle if 'throttle' in locals() else 0, 100),
-        "VOLTAGE DE BATERIA": (volt_val, 16),
-        "NIVEL DE COMBUSTIBLE": (level_val, 16),
-        "PRESSURE": (pressure if 'pressure' in locals() else 0, 100),
-        "STFT %": (stft if 'stft' in locals() else 0, 50),
-        "LTFT %": (ltft if 'ltft' in locals() else 0, 50)
+        "RPM": (rpm, 8000),
+        "SPEED": (speed, 180),
+        "TEMP": (temp, 120),
+        "LOAD %": (load, 100),
+        "THROTTLE %": (throttle, 100),
+        "PRESSURE": (pressure, 100),
+        "STFT %": (stft, 50),
+        "LTFT %": (ltft, 50),
+        "VOLTAGE": (voltage, 16),
+        "FUEL LEVEL": (fuel_level, 100)
     }
+
 
     width = canvas.winfo_width()
     height = canvas.winfo_height()
@@ -252,8 +188,9 @@ def update():
 
     root.after(1000, update)
 
-# ---------------------------------------
-# --------------- START -----------------
-# ---------------------------------------
-update()
+
+# ------------------ START ------------------
+# update()
+# root.mainloop()
+root.after(500, update)
 root.mainloop()
