@@ -42,7 +42,7 @@ Sin embargo, en este vehículo **no se obtuvieron resultados satisfactorios**, p
 # 🔧🧰 Hardware utilizado
 
 
-![Hyundai Getz 2008](https://github.com/alvinphp/obd2-hyundai-getz-2008/blob/main/elm327/recursos/obd.jpeg)
+![Hyundai Getz 2008](https://github.com/alvinphp/obd2-hyundai-getz-2008/blob/main/elm327/recursos/obd1.jpeg)
 
 ## ⚙️ Funcionalidades
 
