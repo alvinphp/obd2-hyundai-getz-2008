@@ -44,6 +44,13 @@ Sin embargo, en este vehículo **no se obtuvieron resultados satisfactorios**, p
 
 ![Hyundai Getz 2008](https://github.com/alvinphp/obd2-hyundai-getz-2008/blob/main/elm327/recursos/obd1.jpg)
 
+---
+
+🖥️📊 Pantalla del software
+
+![Hyundai Getz 2008](https://github.com/alvinphp/obd2-hyundai-getz-2008/blob/main/elm327/recursos/app.png)
+
+
 ## ⚙️ Funcionalidades
 
 - Lectura de RPM del motor
