@@ -21,6 +21,19 @@ Este sistema también fue probado en una **Toyota Hilux Revo**, con la intenció
 Sin embargo, en este vehículo **no se obtuvieron resultados satisfactorios**, probablemente debido a diferencias en el protocolo OBD2 implementado o restricciones de la ECU.
 
 ---
+# 🚗 Compatibilidad de vehículos
+
+## ✔️ Vehículos donde el proyecto funciona
+
+- Hyundai Getz 2008 → ✔ Funciona correctamente  
+- Hyundai Verna 2021 → ✔ Funciona correctamente  
+
+## ❌ Vehículos donde el proyecto NO funciona
+
+- Toyota Hilux Revo 2018 → ❌ No funciona  
+- Toyota Corolla 2008 → ❌ No funciona  
+
+---
 
 ## ⚙️ Funcionalidades
 
